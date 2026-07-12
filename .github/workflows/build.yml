@@ -1,0 +1,39 @@
+name: Build Workflow
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build .alfredworkflow
+        run: zip -r ProtonPass.alfredworkflow info.plist scripts/ icon.png
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProtonPass
+          path: ProtonPass.alfredworkflow
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build .alfredworkflow
+        run: zip -r ProtonPass.alfredworkflow info.plist scripts/ icon.png
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ProtonPass.alfredworkflow
+          generate_release_notes: true
